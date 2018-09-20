@@ -1,5 +1,3 @@
-'use strict';
-//引入vw兼容配置项
 const postcssAspectRatioMini = require('postcss-aspect-ratio-mini');
 const postcssPxToViewport = require('postcss-px-to-viewport');
 const postcssWriteSvg = require('postcss-write-svg');
@@ -19,7 +17,6 @@ const eslintFormatter = require('react-dev-utils/eslintFormatter');
 const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
 const paths = require('./paths');
 const getClientEnvironment = require('./env');
-
 
 // Webpack uses `publicPath` to determine where the app is being served from.
 // It requires a trailing slash, or the file assets will get an incorrect path.
@@ -62,7 +59,7 @@ module.exports = {
   bail: true,
   // We generate sourcemaps in production. This is slow but gives good results.
   // You can exclude the *.map files from the build during deployment.
-  devtool: shouldUseSourceMap ? 'source-map' : false,
+  // devtool: shouldUseSourceMap ? 'source-map' : false,
   // In production, we only want to load the polyfills and the app code.
   entry: [require.resolve('./polyfills'), paths.appIndexJs],
   output: {
@@ -140,9 +137,82 @@ module.exports = {
         // "oneOf" will traverse all following loaders until one will
         // match the requirements. When no loader matches it will fall
         // back to the "file" loader at the end of the loader list.
+        
         oneOf: [
           // "url" loader works just like "file" loader but it also embeds
           // assets smaller than specified size as data URLs to avoid requests.
+          /**************引入 antd-mobile *******************/
+          {
+            test: /\.css$/,
+            exclude: /node_modules|antd-mobile\.css/,
+            use: [
+              require.resolve('style-loader'),
+              {
+                loader: require.resolve('css-loader'),
+                options: {
+                  modules: true,
+                  importLoaders: 1,
+                  localIdentName: '[local]___[hash:base64:5]'
+                },
+              },
+              {
+                loader: require.resolve('postcss-loader'),
+                options: {
+                  // Necessary for external CSS imports to work
+                  // https://github.com/facebookincubator/create-react-app/issues/2677
+                  ident: 'postcss',
+                  plugins: () => [
+                    require('postcss-flexbugs-fixes'),
+                    autoprefixer({
+                      browsers: [
+                        '>1%',
+                        'last 4 versions',
+                        'Firefox ESR',
+                        'not ie < 9', // React doesn't support IE8 anyway
+                      ],
+                      flexbox: 'no-2009',
+                    }),
+                  ],
+                },
+              },
+            ]
+          },
+          {
+            test: /\.less$/,
+            use: [
+              require.resolve('style-loader'),
+              require.resolve('css-loader'),
+              {
+                loader: require.resolve('postcss-loader'),
+                options: {
+                  // Necessary for external CSS imports to work
+                  // https://github.com/facebookincubator/create-react-app/issues/2677
+                  ident: 'postcss',
+                  plugins: () => [
+                    require('postcss-flexbugs-fixes'),
+                    autoprefixer({
+                      browsers: [
+                        '>1%',
+                        'last 4 versions',
+                        'Firefox ESR',
+                        'not ie < 9', // React doesn't support IE8 anyway
+                      ],
+                      flexbox: 'no-2009',
+                    }),
+                  ],
+                },
+              },
+              {
+                loader: require.resolve('less-loader'),
+                options: {
+                  // theme vars, also can use theme.js instead of this.
+                  modifyVars: { "@brand-primary": "#74b9ff" },
+                  javascriptEnabled: true
+                },
+              },
+            ]
+          },
+          /*********************************************************/
           {
             test: [/\.bmp$/, /\.gif$/, /\.jpe?g$/, /\.png$/],
             loader: require.resolve('url-loader'),
@@ -157,7 +227,10 @@ module.exports = {
             include: paths.appSrc,
             loader: require.resolve('babel-loader'),
             options: {
-              
+              plugins: ['transform-runtime', ['import', {
+                libraryName: 'antd-mobile',
+                style: true
+              }]],
               compact: true,
             },
           },
@@ -182,6 +255,7 @@ module.exports = {
                     loader: require.resolve('style-loader'),
                     options: {
                       hmr: false,
+                      
                     },
                   },
                   use: [
@@ -212,28 +286,32 @@ module.exports = {
                             ],
                             flexbox: 'no-2009',
                           }),
-                          //vw单位兼容配置位置
+
                           postcssAspectRatioMini({}),
+                          
                           postcssPxToViewport({ 
                             viewportWidth: 750, // (Number) The width of the viewport. 
                             viewportHeight: 1334, // (Number) The height of the viewport. 
                             unitPrecision: 3, // (Number) The decimal numbers to allow the REM units to grow to. 
                             viewportUnit: 'vw', // (String) Expected units. 
-                            selectorBlackList: ['.ignore', '.hairlines'], // (Array) The selectors to ignore and leave as px. 
+                            selectorBlackList: ['.ignore', '.hairlines', '.am-'], // (Array) The selectors to ignore and leave as px. 
                             minPixelValue: 1, // (Number) Set the minimum pixel value to replace. 
                             mediaQuery: false // (Boolean) Allow px to be converted in media queries. 
                           }),
+
                           postcssWriteSvg({
                             utf8: false
                           }),
+
                           postcssCssnext({}),
+
                           postcssViewportUnits({}),
+
                           cssnano({
                             preset: "advanced", 
                             autoprefixer: false, 
                             "postcss-zindex": false 
                           })
-                          //end
                         ],
                       },
                     },
@@ -254,7 +332,7 @@ module.exports = {
             // it's runtime that would otherwise processed through "file" loader.
             // Also exclude `html` and `json` extensions so they get processed
             // by webpacks internal loaders.
-            exclude: [/\.(js|jsx|mjs)$/, /\.html$/, /\.json$/],
+            exclude: [/\.(js|jsx|mjs)$/, /\.html$/, /\.json$/, /\.less$/],
             options: {
               name: 'static/media/[name].[hash:8].[ext]',
             },
