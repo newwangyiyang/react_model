@@ -32,6 +32,7 @@ class ModelPage extends Component {
                     clear
                     placeholder="auto focus"
                     onBlur={() => {
+                        //失去焦点时获取用户的输入值---进行验证
                         console.log(this.props.form.getFieldsValue().autofocus);
                     }}
                     ref={el => this.autoFocusInst = el}
